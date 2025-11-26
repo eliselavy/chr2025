@@ -1,11 +1,18 @@
 ---
-kernelspec:
-  display_name: Python 3 (ipykernel)
-  language: python
-  name: python3
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .md
+      format_name: markdown
+      format_version: '1.3'
+      jupytext_version: 1.18.1
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
 ---
 
-
+<!-- #region -->
 ## Birds ?
  
 ```{image} img/bird.jpeg
@@ -38,12 +45,13 @@ pip install session_info rdflib networkx matplotlib
 ```
 
 Pour charger les librairies :
+<!-- #endregion -->
 
-```{code-cell} python
+```python
 import session_info
 ```
 
-```{code-cell} python
+```python
 from rdflib import Graph, Literal, RDF, URIRef
 # rdflib knows about quite a few popular namespaces, like W3C ontologies, schema.org etc.
 from rdflib.namespace import FOAF , XSD
@@ -76,7 +84,7 @@ g.bind("foaf", FOAF)
 print(g.serialize(format='n3'))
 ```
 
-```{code-cell} python
+```python
 from rdflib.extras.external_graph_libs import rdflib_to_networkx_graph
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -85,7 +93,7 @@ ug = rdflib_to_networkx_graph(g)
 nx.draw(ug)
 ```
 
-```{code-cell} python
+```python
 import plotly.graph_objects as go
 import numpy as np
 
@@ -153,6 +161,6 @@ for row in qres:
 
 ## Session information
 
-```{code-cell} python
+```python
 session_info.show()
 ```
