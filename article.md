@@ -139,16 +139,21 @@ fig.update_layout(
 fig.show()
 ```
 
- ```python
 # SPARQL Query
 
+```python
+from rdflib import Graph
+
 g2 = Graph()
+
 qres = g2.query(
     """
-    SELECT ?s
+    PREFIX schema: <http://schema.org/>
+    
+    SELECT ?s ?type
     WHERE {
       SERVICE <https://query.wikidata.org/sparql> {
-        ?s a ?o .
+        ?s a ?type .
       }
     }
     LIMIT 10
@@ -156,7 +161,7 @@ qres = g2.query(
 )
 
 for row in qres:
-    print(row.s)
+    print(f"Subject: {row.s}, Type: {row.type}")
 ```
 
 
