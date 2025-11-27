@@ -141,32 +141,125 @@ fig.show()
 
 # SPARQL Query
 
+
+From here:
+https://database.factgrid.de/wiki/FactGrid:Sample_queries
+
+by taking the example: 
+https://database.factgrid.de/query/#%23defaultView%3AMap%0ASELECT%20%3Fitem%20%3FitemLabel%20%3FOrt%20%3FOrtLabel%20%3FGeokoordinaten%20WHERE%20%7B%0A%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22%5BAUTO_LANGUAGE%5D%2Cen%22.%20%7D%0A%20%20%3Fitem%20wdt%3AP2%20wd%3AQ10671.%0A%20%20%3Fitem%20wdt%3AP95%20%3FOrt.%0A%20%20%3FOrt%20wdt%3AP48%20%3FGeokoordinaten.%0A%20%20%3Fitem%20wdt%3AP97%20wd%3AQ10677.%0A%7D
+
 ```python
-from rdflib import Graph
-
-g2 = Graph()
-
-qres = g2.query(
-    """
-    PREFIX schema: <http://schema.org/>
-    
-    SELECT ?s ?type
-    WHERE {
-      SERVICE <https://query.wikidata.org/sparql> {
-        ?s a ?type .
-      }
+from IPython.display import Image, display
+metadata={
+    "jdh": {
+        "module": "object",
+        "object": {
+            "type":"image",
+            "source": ["Diachronic evolution of agency"]
+        }
     }
-    LIMIT 10
-    """
-)
-
-for row in qres:
-    print(f"Subject: {row.s}, Type: {row.type}")
+}
+display(Image("./media/factgrid_code.png"), metadata=metadata)
 ```
 
+```python
+sparql_query = """
+SELECT ?item ?itemLabel ?Ort ?OrtLabel ?Geokoordinaten 
+WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+  ?item wdt:P2 wd:Q10671.
+  ?item wdt:P95 ?Ort.
+  ?Ort wdt:P48 ?Geokoordinaten.
+  ?item wdt:P97 wd:Q10677.
+}
+"""
+```
 
-## Session information
+```python
+import sys
+from SPARQLWrapper import SPARQLWrapper, JSON
+
+endpoint_url = "https://database.factgrid.de/sparql"
+
+query = """#defaultView:Map
+SELECT ?item ?itemLabel ?Ort ?OrtLabel ?Geokoordinaten WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+  ?item wdt:P2 wd:Q10671.
+  ?item wdt:P95 ?Ort.
+  ?Ort wdt:P48 ?Geokoordinaten.
+  ?item wdt:P97 wd:Q10677.
+}"""
+
+
+def get_results(endpoint_url, query):
+    user_agent = "WDQS-example Python/%s.%s" % (sys.version_info[0], sys.version_info[1])
+    # TODO adjust user agent; see https://w.wiki/CX6
+    sparql = SPARQLWrapper(endpoint_url, agent=user_agent)
+    sparql.setQuery(query)
+    sparql.setReturnFormat(JSON)
+    return sparql.query().convert()
+
+
+results = get_results(endpoint_url, query)
+
+#for result in results["results"]["bindings"]:
+ #   print(result)
+results
+```
+
+## Map
+
+```python
+import pandas as pd
+import folium
+from folium.plugins import MarkerCluster
+import re
+
+# Parse the SPARQL bindings
+bindings = results["results"]["bindings"]
+
+data = []
+for result in bindings:
+    wkt = result['Geokoordinaten']['value']
+    
+    # Extract lon, lat from WKT Point format
+    match = re.search(r'Point\(([\d.]+)\s+([\d.]+)\)', wkt)
+    if match:
+        lon, lat = float(match.group(1)), float(match.group(2))
+
+        data.append({
+            'item': result['item']['value'],
+            'itemLabel': result['itemLabel']['value'],
+            'location': result['OrtLabel']['value'],
+            'latitude': lat,
+            'longitude': lon
+        })
+
+df = pd.DataFrame(data)
+
+# Create the map centered on the mean coordinates
+map_center = [df['latitude'].mean(), df['longitude'].mean()]
+m = folium.Map(location=map_center, zoom_start=6)
+
+# Add marker cluster
+marker_cluster = MarkerCluster().add_to(m)
+
+# Add markers
+for _, row in df.iterrows():
+    folium.Marker(
+        [row['latitude'], row['longitude']],
+        popup=f"<b>{row['location']}</b><br>{row['itemLabel']}",
+        tooltip=row['location']
+    ).add_to(marker_cluster)
+
+# Save and display
+m.save('letters_map.html')
+m
+
+```
 
 ```python
 session_info.show()
 ```
+
+## Session information
