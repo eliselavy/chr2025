@@ -7,3 +7,5 @@ plotly
 anywidget
 numpy
 sparqlwrapper
+pandas
+folium
