@@ -261,6 +261,10 @@ m.save('letters_map.html')
 ```
 
 ```python
+m
+```
+
+```python
 from IPython.display import IFrame
 IFrame("letters_map.html", width="100%", height="600px")
 ```
